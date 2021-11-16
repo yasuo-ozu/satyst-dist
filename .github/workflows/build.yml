@@ -57,12 +57,13 @@ jobs:
           source: "${{ env.OPAMROOT }}/share/*"
           target: "./share/"
 
-      - name: build satysfi-language-server
-        uses: actions-rs/cargo@v1
-        working-directory: ./satysfi-language-server
+      - uses: actions-rs/toolchain@v1
         with:
-          command: build
-          args: --release
+          toolchain: stable
+
+      - name: build satysfi-language-server
+        working-directory: ./satysfi-language-server
+        run: cargo build --release
 
       - name: copy satysfi-language-server
         uses: canastro/copy-file-action@master
