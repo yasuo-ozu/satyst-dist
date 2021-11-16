@@ -1,0 +1,86 @@
+name: Build binaries in each platform
+on:
+  push:
+    branches-ignore:
+      - 'main'
+      - 'master'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        builds:
+          - name: macos-x86_64
+            os: macos-latest
+          - name: linux-x86_64
+            os: ubuntu-latest
+          - name: windows-x86_64
+            os: windows-latest
+        ocaml-compiler:
+          - 4.13.x
+
+    runs-on: ${{ matrix.builds.os }}
+
+    steps:
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+
+      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+
+      - run: opam repository add satysfi-external https://github.com/gfngfn/satysfi-external-repo.git
+
+      - run: opam repository add satyrographos-repo https://github.com/na4zagin3/satyrographos-repo.git
+
+      - run: opam install satysfi.${{ steps.extract_branch.outputs.branch  }} -y
+      - run: opam install satysfi-dist.${{ steps.extract_branch.outputs.branch  }} -y
+
+      - name: copy bin file
+        uses: canastro/copy-file-action@master
+        with:
+          source: "${{ env.OPAMROOT }}/bin/*"
+          target: "./bin/"
+
+      - name: copy share file
+        uses: canastro/copy-file-action@master
+        with:
+          source: "${{ env.OPAMROOT }}/share/*"
+          target: "./share/"
+
+      - name: build satysfi-language-server
+        uses: actions-rs/cargo@v1
+        working-directory: ./satysfi-language-server
+        with:
+          command: build
+          args: --release
+
+      - name: copy satysfi-language-server
+        uses: canastro/copy-file-action@master
+        with:
+          source: "./satysfi-language-server/target/releasesatysfi-language-server"
+          target: "./bin/"
+
+      - name: git setting
+        run: |
+          git config --local user.email "yasuo@ozu.email"
+          git config --local user.name "yasuo-ozu"
+
+      - name: Commit files
+        run: |
+          git add bin share
+          git commit -m "Update bin and share"
+          git tag -f ${{matrix.builds.name}}/${{ steps.extract_branch.outputs.branch  }}
+          git pull
+          git push origin ${{matrix.builds.name}}/${{ steps.extract_branch.outputs.branch  }}
+          git reset --hard 'HEAD^'
+

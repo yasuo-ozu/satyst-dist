@@ -1,0 +1,3 @@
+[submodule "satysfi-language-server"]
+	path = satysfi-language-server
+	url = https://github.com/monaqa/satysfi-language-server.git
