@@ -42,8 +42,9 @@ jobs:
 
       - run: opam repository add satyrographos-repo https://github.com/na4zagin3/satyrographos-repo.git
 
-      - run: opam install satysfi.${{ steps.extract_branch.outputs.branch  }} -y
-      - run: opam install satysfi-dist.${{ steps.extract_branch.outputs.branch  }} -y
+      - run: opam install satysfi.${{ steps.extract_branch.outputs.branch  }} -y --update-invariant
+
+      - run: opam install satysfi-dist.${{ steps.extract_branch.outputs.branch  }} -y --update-invariant
 
       - name: copy bin file
         uses: canastro/copy-file-action@master
