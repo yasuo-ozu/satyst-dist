@@ -40,11 +40,11 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Cache OPAM files
-        uses: actions/cache@v2
-        with:
-          key: opam-${{ matrix.builds.os }}-${{ matrix.builds.ocaml_version }}-${{ matrix.builds.opam_dir }}
-          path: ${{ matrix.builds.opam_dir }}
+            #- name: Cache OPAM files
+            #  uses: actions/cache@v2
+            #  with:
+            #    key: opam-${{ matrix.builds.os }}-${{ matrix.builds.ocaml_version }}-${{ matrix.builds.opam_dir }}
+            #    path: ${{ matrix.builds.opam_dir }}
 
       - name: Use OCaml ${{ matrix.builds.ocaml_version }}
         uses: ocaml/setup-ocaml@v2
