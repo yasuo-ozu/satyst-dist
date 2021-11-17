@@ -99,7 +99,7 @@ jobs:
         if: contains(matrix.builds.os, 'windows')
 
       - name: copy satysfi-language-server (not windows)
-        run: cp -rf "./satysfi-language-server/target/releasesatysfi-language-server" ./bin/
+        run: cp -rf "./satysfi-language-server/target/release/satysfi-language-server" ./bin/
         if: ${{!(contains(matrix.builds.os, 'windows'))}}
 
       - name: git setting
