@@ -88,7 +88,7 @@ jobs:
         run: |
           New-Item -ItemType "directory" -Path ".\\bin" -Force
           New-Item -ItemType "directory" -Path ".\\share" -Force
-          Copy-Item -Path ($env:OPAM_SWITCH_PREFIX + "\\bin\\satysfi")  -Destination ".\\bin"
+          Copy-Item -Path ($env:OPAM_SWITCH_PREFIX + "\\bin\\satysfi.exe")  -Destination ".\\bin"
           Copy-Item -Path ($env:OPAM_SWITCH_PREFIX + "\\share\\satysfi")  -Destination ".\\share"
         if: contains(matrix.builds.os, 'windows')
 
@@ -101,7 +101,7 @@ jobs:
         run: cargo build --release
 
       - name: copy satysfi-language-server (windows)
-        run: Copy-Item ".\\satysfi-language-server\\target\\release\\satysfi-language-server" -Destination ".\\bin"
+        run: Copy-Item ".\\satysfi-language-server\\target\\release\\satysfi-language-server.exe" -Destination ".\\bin"
         if: contains(matrix.builds.os, 'windows')
 
       - name: copy satysfi-language-server (not windows)
@@ -115,6 +115,7 @@ jobs:
 
       - name: Commit files
         run: |
+          git reset
           git add bin share
           git commit -m "Update bin and share"
           git tag -f ${{matrix.builds.name}}/${{ env.GITHUB_BRANCH  }}
