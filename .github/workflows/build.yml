@@ -13,12 +13,16 @@ jobs:
         builds:
           - name: macos-x86_64
             os: macos-latest
+            ocaml_version: 4.12.1
+            opam_switch: "~/.opam/default/"
           - name: linux-x86_64
             os: ubuntu-latest
+            ocaml_version: 4.12.1
+            opam_switch: "~/.opam/default/"
           - name: windows-x86_64
             os: windows-latest
-        ocaml-compiler:
-          - 4.12.x
+            ocaml_version: 4.12.1
+            opam_switch: "C:\\cygwin\\home\\runneradmin\\.opam\\default\\"
 
     runs-on: ${{ matrix.builds.os }}
 
@@ -37,10 +41,15 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+      - name: Use OCaml ${{ matrix.builds.ocaml_version }}
         uses: ocaml/setup-ocaml@v2
         with:
-          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          ocaml-compiler: ${{ matrix.builds.ocaml_version }}
+
+      - name: Extract opam root
+        shell: bash
+        run: "eval $(opam env); echo $OPAM_SWITCH_PREFIX"
+        id: switch_prefix
 
       - run: opam repository add satysfi-external https://github.com/gfngfn/satysfi-external-repo.git
 
@@ -57,8 +66,17 @@ jobs:
       - name: Copy files
         run: |
           mkdir -p ./bin ./share
-          cp -rf "${{ env.OPAM_SWITCH_PREFIX }}/bin/satysfi" ./bin/
-          cp -rf "${{ env.OPAM_SWITCH_PREFIX }}/share/satysfi" ./share/
+          cp -rf "${{ steps.switch_prefix }}/bin/satysfi" ./bin/
+          cp -rf "${{ steps.switch_prefix }}/share/satysfi" ./share/
+        if: not(contains(matrix.builds.os, 'windows'))
+
+      - name: Copy files
+        run: |
+          New-Item -ItemType "directory" -Path ".\\bin" -Force
+          New-Item -ItemType "directory" -Path ".\\share" -Force
+          Copy-Item -Path "${{ steps.switch_prefix }}\\bin\\satysfi"  -Destination ".\\bin"
+          Copy-Item -Path "${{ steps.switch_prefix }}\\share\\satysfi"  -Destination ".\\share"
+        if: contains(matrix.builds.os, 'windows')
 
       - uses: actions-rs/toolchain@v1
         with:
@@ -69,7 +87,12 @@ jobs:
         run: cargo build --release
 
       - name: copy satysfi-language-server
+        run: Copy-Item ".\\satysfi-language-server\\target\\release\\satysfi-language-server" -Destination ".\\bin"
+        if: contains(matrix.builds.os, 'windows')
+
+      - name: copy satysfi-language-server
         run: cp -rf "./satysfi-language-server/target/releasesatysfi-language-server" ./bin/
+        if: not(contains(matrix.builds.os, 'windows'))
 
       - name: git setting
         run: |
