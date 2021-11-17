@@ -66,16 +66,16 @@ jobs:
       - name: Copy files
         run: |
           mkdir -p ./bin ./share
-          cp -rf "${{ steps.switch_prefix }}/bin/satysfi" ./bin/
-          cp -rf "${{ steps.switch_prefix }}/share/satysfi" ./share/
+          cp -rf "${{ steps.switch_prefix.output }}/bin/satysfi" ./bin/
+          cp -rf "${{ steps.switch_prefix.output }}/share/satysfi" ./share/
         if: ${{!(contains(matrix.builds.os, 'windows'))}}
 
       - name: Copy files
         run: |
           New-Item -ItemType "directory" -Path ".\\bin" -Force
           New-Item -ItemType "directory" -Path ".\\share" -Force
-          Copy-Item -Path "${{ steps.switch_prefix }}\\bin\\satysfi"  -Destination ".\\bin"
-          Copy-Item -Path "${{ steps.switch_prefix }}\\share\\satysfi"  -Destination ".\\share"
+          Copy-Item -Path "${{ steps.switch_prefix.output }}\\bin\\satysfi"  -Destination ".\\bin"
+          Copy-Item -Path "${{ steps.switch_prefix.output }}\\share\\satysfi"  -Destination ".\\share"
         if: contains(matrix.builds.os, 'windows')
 
       - uses: actions-rs/toolchain@v1
