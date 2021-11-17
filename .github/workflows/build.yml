@@ -18,7 +18,7 @@ jobs:
           - name: windows-x86_64
             os: windows-latest
         ocaml-compiler:
-          - 4.13.x
+          - 4.12.x
 
     runs-on: ${{ matrix.builds.os }}
 
@@ -27,6 +27,10 @@ jobs:
         shell: bash
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
         id: extract_branch
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+        if: contains(matrix.builds.os, 'windows')
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -53,8 +57,8 @@ jobs:
       - name: Copy files
         run: |
           mkdir -p ./bin ./share
-          cp -rf "${{ env.OPAMROOT }}/bin/satysfi" ./bin/
-          cp -rf "${{ env.OPAMROOT }}/share/satysfi" ./share/
+          cp -rf "${{ env.OPAM_SWITCH_PREFIX }}/bin/satysfi" ./bin/
+          cp -rf "${{ env.OPAM_SWITCH_PREFIX }}/share/satysfi" ./share/
 
       - uses: actions-rs/toolchain@v1
         with:
