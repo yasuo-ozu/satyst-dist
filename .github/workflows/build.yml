@@ -68,7 +68,7 @@ jobs:
           mkdir -p ./bin ./share
           cp -rf "${{ steps.switch_prefix }}/bin/satysfi" ./bin/
           cp -rf "${{ steps.switch_prefix }}/share/satysfi" ./share/
-        if: not(contains(matrix.builds.os, 'windows'))
+        if: ${{!(contains(matrix.builds.os, 'windows'))}}
 
       - name: Copy files
         run: |
@@ -92,7 +92,7 @@ jobs:
 
       - name: copy satysfi-language-server
         run: cp -rf "./satysfi-language-server/target/releasesatysfi-language-server" ./bin/
-        if: not(contains(matrix.builds.os, 'windows'))
+        if: ${{!(contains(matrix.builds.os, 'windows'))}}
 
       - name: git setting
         run: |
