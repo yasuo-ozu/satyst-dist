@@ -42,21 +42,19 @@ jobs:
 
       - run: opam repository add satyrographos-repo https://github.com/na4zagin3/satyrographos-repo.git
 
-      - run: opam install satysfi.${{ steps.extract_branch.outputs.branch  }} -y --update-invariant
+      - run: opam install satysfi.${{ steps.extract_branch.outputs.branch  }} -y
+        env:
+          OPAMUNLOCKBASE: true
 
-      - run: opam install satysfi-dist.${{ steps.extract_branch.outputs.branch  }} -y --update-invariant
+      - run: opam install satysfi-dist.${{ steps.extract_branch.outputs.branch  }} -y
+        env:
+          OPAMUNLOCKBASE: true
 
-      - name: copy bin file
-        uses: canastro/copy-file-action@master
-        with:
-          source: "${{ env.OPAMROOT }}/bin/*"
-          target: "./bin/"
-
-      - name: copy share file
-        uses: canastro/copy-file-action@master
-        with:
-          source: "${{ env.OPAMROOT }}/share/*"
-          target: "./share/"
+      - name: Copy files
+        run: |
+          mkdir -p ./bin ./share
+          cp -rf "${{ env.OPAMROOT }}/bin/satysfi" ./bin/
+          cp -rf "${{ env.OPAMROOT }}/share/satysfi" ./share/
 
       - uses: actions-rs/toolchain@v1
         with:
@@ -67,10 +65,7 @@ jobs:
         run: cargo build --release
 
       - name: copy satysfi-language-server
-        uses: canastro/copy-file-action@master
-        with:
-          source: "./satysfi-language-server/target/releasesatysfi-language-server"
-          target: "./bin/"
+        run: cp -rf "./satysfi-language-server/target/releasesatysfi-language-server" ./bin/
 
       - name: git setting
         run: |
