@@ -27,12 +27,11 @@ jobs:
     runs-on: ${{ matrix.builds.os }}
 
     steps:
-      - name: Extract branch name
+      - name: Extract GITHUB_BRANCH
         shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
+        run: echo "GITHUB_BRANCH=${GITHUB_REF#refs/heads/}" >> "$GITHUB_ENV"
 
-      - name: Add msbuild to PATH
+      - name: Add msbuild to PATH (windows)
         uses: microsoft/setup-msbuild@v1.1
         if: contains(matrix.builds.os, 'windows')
 
@@ -52,41 +51,45 @@ jobs:
         with:
           ocaml-compiler: ${{ matrix.builds.ocaml_version }}
 
-      - name: Extract opam root
-        run: "opam env | Select-String -Pattern \"OPAM_SWITCH_PREFIX\" | %{ \"##[set-output name=name;]\" + $_.Line.split(\"'\")[1] }"
-        id: switch_prefix
+      - name: Extract OPAM_SWITCH_PREFIX (windows)
+        run: "opam env | Select-String -Pattern \"OPAM_SWITCH_PREFIX\" | %{ \"OPAM_SWITCH_PREFIX=\" + $_.Line.split(\"'\")[1] } | Add-Content -Path \"$env:GITHUB_ENV\""
         if: contains(matrix.builds.os, 'windows')
           
-      - name: Extract opam root
-        run: "eval $(opam env); echo \"##[set-output name=name;]$OPAM_SWITCH_PREFIX\""
-        id: switch_prefix
+      - name: Extract OPAM_SWITCH_PREFIX (not windows)
+        run: "eval $(opam env); echo \"OPAM_SWITCH_PREFIX=$OPAM_SWITCH_PREFIX\" >> \"$GITHUB_ENV\""
         if: ${{!(contains(matrix.builds.os, 'windows'))}}
 
-      - run: opam repository add satysfi-external https://github.com/gfngfn/satysfi-external-repo.git
+      - name: dump vars
+        shell: bash
+        run: |
+          echo "OPAM_SWITCH_PREFIX=$OPAM_SWITCH_PREFIX"
+          echo "GITHUB_BRANCH=$GITHUB_BRANCH"
 
-      - run: opam repository add satyrographos-repo https://github.com/na4zagin3/satyrographos-repo.git
+      - name: Add opam repos
+        run: |
+          opam repository add satysfi-external https://github.com/gfngfn/satysfi-external-repo.git
+          opam repository add satyrographos-repo https://github.com/na4zagin3/satyrographos-repo.git
 
-      - run: opam install satysfi.${{ steps.extract_branch.outputs.branch  }} -y
+      - name: Install SATySFi packages for version ${{ env.GITHUB_BRANCH }}
+        run: |
+          opam install satysfi.${{ env.GITHUB_BRANCH }} -y
+          opam install satysfi-dist.${{ env.GITHUB_BRANCH  }} -y
         env:
           OPAMUNLOCKBASE: true
 
-      - run: opam install satysfi-dist.${{ steps.extract_branch.outputs.branch  }} -y
-        env:
-          OPAMUNLOCKBASE: true
-
-      - name: Copy files
+      - name: Copy files (not windows)
         run: |
           mkdir -p ./bin ./share
-          cp -rf "${{ steps.switch_prefix.outputs.name }}/bin/satysfi" ./bin/
-          cp -rf "${{ steps.switch_prefix.outputs.name }}/share/satysfi" ./share/
+          cp -rf "$OPAM_SWITCH_PREFIX/bin/satysfi" ./bin/
+          cp -rf "$OPAM_SWITCH_PREFIX/share/satysfi" ./share/
         if: ${{!(contains(matrix.builds.os, 'windows'))}}
 
-      - name: Copy files
+      - name: Copy files (windows)
         run: |
           New-Item -ItemType "directory" -Path ".\\bin" -Force
           New-Item -ItemType "directory" -Path ".\\share" -Force
-          Copy-Item -Path "${{ steps.switch_prefix.outputs.name }}\\bin\\satysfi"  -Destination ".\\bin"
-          Copy-Item -Path "${{ steps.switch_prefix.outputs.name }}\\share\\satysfi"  -Destination ".\\share"
+          Copy-Item -Path ($env:OPAM_SWITCH_PREFIX + "\\bin\\satysfi.exe")  -Destination ".\\bin"
+          Copy-Item -Path ($env:OPAM_SWITCH_PREFIX + "\\share\\satysfi")  -Destination ".\\share"
         if: contains(matrix.builds.os, 'windows')
 
       - uses: actions-rs/toolchain@v1
@@ -97,12 +100,12 @@ jobs:
         working-directory: ./satysfi-language-server
         run: cargo build --release
 
-      - name: copy satysfi-language-server
-        run: Copy-Item ".\\satysfi-language-server\\target\\release\\satysfi-language-server" -Destination ".\\bin"
+      - name: copy satysfi-language-server (windows)
+        run: Copy-Item ".\\satysfi-language-server\\target\\release\\satysfi-language-server.exe" -Destination ".\\bin"
         if: contains(matrix.builds.os, 'windows')
 
-      - name: copy satysfi-language-server
-        run: cp -rf "./satysfi-language-server/target/releasesatysfi-language-server" ./bin/
+      - name: copy satysfi-language-server (not windows)
+        run: cp -rf "./satysfi-language-server/target/release/satysfi-language-server" ./bin/
         if: ${{!(contains(matrix.builds.os, 'windows'))}}
 
       - name: git setting
@@ -112,10 +115,10 @@ jobs:
 
       - name: Commit files
         run: |
+          git reset
           git add bin share
           git commit -m "Update bin and share"
-          git tag -f ${{matrix.builds.name}}/${{ steps.extract_branch.outputs.branch  }}
-          git pull
-          git push origin ${{matrix.builds.name}}/${{ steps.extract_branch.outputs.branch  }}
+          git tag -f ${{matrix.builds.name}}/${{ env.GITHUB_BRANCH  }}
+          git push origin ${{matrix.builds.name}}/${{ env.GITHUB_BRANCH }}
           git reset --hard 'HEAD^'
 
