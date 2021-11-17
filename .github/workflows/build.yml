@@ -47,9 +47,14 @@ jobs:
           ocaml-compiler: ${{ matrix.builds.ocaml_version }}
 
       - name: Extract opam root
-        shell: bash
-        run: "eval $(opam env); echo ##[set-output name=name;]$OPAM_SWITCH_PREFIX"
+        run: "opam env | Select-String -Pattern \"OPAM_SWITCH_PREFIX\" | %{ \"##[set-output name=name;]\" + $_.Line.split(\"'\")[1] }"
         id: switch_prefix
+        if: contains(matrix.builds.os, 'windows')
+          
+      - name: Extract opam root
+        run: "eval $(opam env); echo \"##[set-output name=name;]$OPAM_SWITCH_PREFIX\""
+        id: switch_prefix
+        if: ${{!(contains(matrix.builds.os, 'windows'))}}
 
       - run: opam repository add satysfi-external https://github.com/gfngfn/satysfi-external-repo.git
 
