@@ -82,8 +82,8 @@ jobs:
         run: |
           New-Item -ItemType "directory" -Path ".\\bin" -Force
           New-Item -ItemType "directory" -Path ".\\share" -Force
-          Copy-Item -Path $env:OPAM_SWITCH_PREFIX + "\\bin\\satysfi"  -Destination ".\\bin"
-          Copy-Item -Path $env:OPAM_SWITCH_PREFIX + "\\share\\satysfi"  -Destination ".\\share"
+          Copy-Item -Path ($env:OPAM_SWITCH_PREFIX + "\\bin\\satysfi")  -Destination ".\\bin"
+          Copy-Item -Path ($env:OPAM_SWITCH_PREFIX + "\\share\\satysfi")  -Destination ".\\share"
         if: contains(matrix.builds.os, 'windows')
 
       - uses: actions-rs/toolchain@v1
