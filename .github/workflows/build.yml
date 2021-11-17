@@ -119,6 +119,6 @@ jobs:
           git add bin share
           git commit -m "Update bin and share"
           git tag -f ${{matrix.builds.name}}/${{ env.GITHUB_BRANCH  }}
-          git push origin ${{matrix.builds.name}}/${{ env.GITHUB_BRANCH }}
+          git push --force origin ${{matrix.builds.name}}/${{ env.GITHUB_BRANCH }}
           git reset --hard 'HEAD^'
 
