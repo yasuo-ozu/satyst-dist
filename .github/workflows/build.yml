@@ -14,15 +14,15 @@ jobs:
           - name: macos-x86_64
             os: macos-latest
             ocaml_version: 4.12.1
-            opam_switch: "~/.opam/default/"
+            opam_dir: "/Users/runner/work/satyst-dist/satyst-dist/_opam"
           - name: linux-x86_64
             os: ubuntu-latest
             ocaml_version: 4.12.1
-            opam_switch: "~/.opam/default/"
+            opam_dir: "/home/runner/work/satyst-dist/satyst-dist/_opam"
           - name: windows-x86_64
             os: windows-latest
             ocaml_version: 4.12.1
-            opam_switch: "C:\\cygwin\\home\\runneradmin\\.opam\\default\\"
+            opam_dir: "D:\\a\\satyst-dist\\satyst-dist\\_opam"
 
     runs-on: ${{ matrix.builds.os }}
 
@@ -40,6 +40,12 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: 'recursive'
+
+      - name: Cache OPAM files
+        uses: actions/cache@v2
+        with:
+          key: opam-${{ matrix.builds.os }}-${{ matrix.builds.ocaml_version }}-${{ matrix.builds.opam_dir }}
+          path: ${{ matrix.builds.opam_dir }}
 
       - name: Use OCaml ${{ matrix.builds.ocaml_version }}
         uses: ocaml/setup-ocaml@v2
